@@ -81,7 +81,7 @@ void pilih_biomaterial(struct Biomaterial *b, int pilihan) {
             b->estimasi_durasi_terapi = 60;
             break;
         default:
-            printf("Pilihan valid.\n");
+            printf("Pilihan tidak valid.\n");
             break;
     }
 }
