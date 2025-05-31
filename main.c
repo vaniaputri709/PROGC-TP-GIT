@@ -85,3 +85,53 @@ void pilih_biomaterial(struct Biomaterial *b, int pilihan) {
             break;
     }
 }
+
+void simulasi(struct Biomaterial *b, float *histori, int interval_pemantauan) {
+    float massa = b->massa_awal;
+    float massa_sebelumnya = massa;
+    float target_massa_minimum = b->massa_awal * AMBANG;
+    int hari = 0;
+
+    printf("\n=== SIMULASI DEGRADASI ===\n");
+
+    while (hari < MAX_HARI) {
+        massa -= massa * b->laju_degradasi / 100.0;
+        histori[hari] = massa;
+
+        float persen_sisa = (massa / b->massa_awal) * 100.0;
+        float penurunan = massa_sebelumnya - massa;
+
+        printf("Hari ke-%2d | Massa: %.2f g [", hari + 1, massa);
+        tampilkan_bar(persen_sisa);
+        printf("]");
+
+        if (penurunan > (b->massa_awal * 0.10)) printf(" Penurunan tajam!");
+        if (massa <= target_massa_minimum) {
+            printf(" Di bawah batas aman!\n");
+            break;
+        }
+
+        printf("\n");
+        massa_sebelumnya = massa;
+        hari++;
+        if (hari % interval_pemantauan != 0) continue;
+    }
+
+    float degradasi_total = b->massa_awal - massa;
+    float persen_total = (degradasi_total / b->massa_awal) * 100.0;
+    const char* status = level_degradasi(persen_total);
+    const char* rekomendasi = rekomendasi_klinis(persen_total);
+
+    printf("\n=== RINGKASAN PENILAIAN PENELITI BIOMATERIAL ===\n");
+    printf("Nama Pasien       : %s\n", b->nama_pasien);
+    printf("Biomaterial       : %s (%s)\n", b->nama, b->jenis);
+    printf("Aplikasi Medis    : %s\n", b->aplikasi);
+    printf("Jenis Pasien      : %s\n", b->jenis_pasien);
+    printf("Massa Awal        : %.2f g\n", b->massa_awal);
+    printf("Massa Akhir       : %.2f g\n", massa);
+    printf("Penurunan Total   : %.2f g (%.1f%%)\n", degradasi_total, persen_total);
+    printf("Status Klinis     : %s\n", status);
+    printf("Rekomendasi Tindakan: %s\n", rekomendasi);
+    printf("Estimasi Durasi Terapi: %d hari\n", b->estimasi_durasi_terapi);
+    printf("Catatan Peneliti  : %s\n", b->catatan_klinis);
+} 
