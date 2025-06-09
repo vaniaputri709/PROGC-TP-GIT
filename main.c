@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
+#include <ctype.h>
 
 #define MAX_HARI 30
 #define AMBANG 0.2 // 20%
@@ -20,6 +20,17 @@ struct Biomaterial {
     int estimasi_durasi_terapi;
     char catatan_klinis[100];
 };
+
+enum JenisPasien { ANAK_ANAK = 1, DEWASA, LANSIA };
+
+const char* konversi_jenis_pasien(int kode) {
+    switch(kode) {
+        case ANAK_ANAK: return "Anak-anak";
+        case DEWASA: return "Dewasa";
+        case LANSIA: return "Lansia";
+        default: return "Tidak diketahui";
+    }
+}
 
 const char* level_degradasi(float persentase) {
     if (persentase < 20) return "Biomaterial masih stabil";
@@ -81,29 +92,13 @@ void pilih_biomaterial(struct Biomaterial *b, int pilihan) {
             b->estimasi_durasi_terapi = 60;
             break;
         default:
-            printf("Pilihan tidak valid.\n");
-            break;
-    }
-}
-
-void pilih_aplikasi_medis(char *tujuan) {
-    int pilih;
-    printf("\n=== Pilih Aplikasi Medis ===\n");
-    printf("1. Rekonstruksi Tulang\n");
-    printf("2. Penyembuhan Luka\n");
-    printf("3. Drug Delivery System\n");
-    printf("4. Penambalan Kartilago\n");
-    printf("Masukkan pilihan (1-4): ");
-    scanf("%d", &pilih);
-    getchar();
-    switch(pilih) {
-        case 1: strcpy(tujuan, "Rekonstruksi Tulang"); break;
-        case 2: strcpy(tujuan, "Penyembuhan Luka"); break;
-        case 3: strcpy(tujuan, "Drug Delivery System"); break;
-        case 4: strcpy(tujuan, "Penambalan Kartilago"); break;
-        default:
-            printf("Pilihan tidak valid. Menggunakan default: Penyembuhan Luka\n");
-            strcpy(tujuan, "Penyembuhan Luka");
+            strcpy(b->nama, "Custom");
+            strcpy(b->jenis, "Lainnya");
+            strcpy(b->bentuk_fisik, "Tidak diketahui");
+            b->laju_degradasi = 4.0;
+            b->densitas = 1.0;
+            b->luas_permukaan = 10.0;
+            b->estimasi_durasi_terapi = 20;
             break;
     }
 }
@@ -168,8 +163,7 @@ void tampilkan_header() {
 int main() {
     struct Biomaterial biomat;
     float *histori_massa;
-    int pilihan;
-    int interval_pemantauan;
+    int pilihan, interval_pemantauan, kode_pasien;
 
     tampilkan_header();
 
@@ -177,29 +171,65 @@ int main() {
     fgets(biomat.nama_pasien, sizeof(biomat.nama_pasien), stdin);
     biomat.nama_pasien[strcspn(biomat.nama_pasien, "\n")] = 0;
 
-    printf("\n=== Pilih Biomaterial ===\n");
-    printf("1. PLA Scaffold\n");
-    printf("2. Magnesium Alloy\n");
-    printf("3. Chitosan Mesh\n");
-    printf("4. Hydroxyapatite Composite\n");
-    printf("Masukkan pilihan (1-4): ");
-    scanf("%d", &pilihan);
-    getchar();
+    do {
+        printf("\n=== Pilih Biomaterial ===\n");
+        printf("1. PLA Scaffold\n");
+        printf("2. Magnesium Alloy\n");
+        printf("3. Chitosan Mesh\n");
+        printf("4. Hydroxyapatite Composite\n");
+        printf("5. Lainnya\n");
+        printf("Masukkan pilihan (1-5): ");
+        scanf("%d", &pilihan);
+        getchar();
+        if (pilihan >= 1 && pilihan <= 5) break;
+        printf("Pilihan tidak valid. Coba lagi.\n");
+    } while (1);
     pilih_biomaterial(&biomat, pilihan);
 
-    printf("Masukkan massa awal (gram): ");
-    scanf("%f", &biomat.massa_awal);
-    getchar();
+    do {
+        printf("Masukkan massa awal (gram): ");
+        scanf("%f", &biomat.massa_awal);
+        getchar();
+        if (biomat.massa_awal > 0) break;
+        printf("Input tidak valid. Massa harus positif.\n");
+    } while (1);
 
-    pilih_aplikasi_medis(biomat.aplikasi);
+    do {
+        printf("\n=== Pilih Aplikasi Medis ===\n");
+        printf("1. Rekonstruksi Tulang\n");
+        printf("2. Penyembuhan Luka\n");
+        printf("3. Drug Delivery System\n");
+        printf("4. Penambalan Kartilago\n");
+        printf("Masukkan pilihan (1-4): ");
+        scanf("%d", &pilihan);
+        getchar();
+        if (pilihan >= 1 && pilihan <= 4) break;
+        printf("Pilihan tidak valid. Coba lagi.\n");
+    } while (1);
 
-    printf("Jenis pasien (Anak-anak / Dewasa / Lansia): ");
-    fgets(biomat.jenis_pasien, sizeof(biomat.jenis_pasien), stdin);
-    biomat.jenis_pasien[strcspn(biomat.jenis_pasien, "\n")] = 0;
+    switch(pilihan) {
+        case 1: strcpy(biomat.aplikasi, "Rekonstruksi Tulang"); break;
+        case 2: strcpy(biomat.aplikasi, "Penyembuhan Luka"); break;
+        case 3: strcpy(biomat.aplikasi, "Drug Delivery System"); break;
+        case 4: strcpy(biomat.aplikasi, "Penambalan Kartilago"); break;
+    }
 
-    printf("Interval waktu antar pemantauan (hari): ");
-    scanf("%d", &interval_pemantauan);
-    getchar();
+    do {
+        printf("Jenis pasien:\n1. Anak-anak\n2. Dewasa\n3. Lansia\nMasukkan pilihan (1-3): ");
+        scanf("%d", &kode_pasien);
+        getchar();
+        if (kode_pasien >= 1 && kode_pasien <= 3) break;
+        printf("Pilihan tidak valid. Silakan coba lagi.\n");
+    } while (1);
+    strcpy(biomat.jenis_pasien, konversi_jenis_pasien(kode_pasien));
+
+    do {
+        printf("Interval waktu antar pemantauan (hari): ");
+        scanf("%d", &interval_pemantauan);
+        getchar();
+        if (interval_pemantauan > 0) break;
+        printf("Input tidak boleh nol atau negatif. Coba lagi.\n");
+    } while (1);
 
     printf("Catatan khusus dari peneliti (maks. 100 karakter): ");
     fgets(biomat.catatan_klinis, sizeof(biomat.catatan_klinis), stdin);
@@ -213,10 +243,16 @@ int main() {
 
     simulasi(&biomat, histori_massa, interval_pemantauan);
 
-    printf("\nTampilkan grafik histori degradasi? (y/n): ");
     char jawab;
-    scanf(" %c", &jawab);
-    if (jawab == 'y' || jawab == 'Y') {
+    do {
+        printf("\nTampilkan grafik histori degradasi? (y/n): ");
+        scanf(" %c", &jawab);
+        jawab = tolower(jawab);
+        if (jawab == 'y' || jawab == 'n') break;
+        printf("Input tidak valid. Harus 'y' atau 'n'.\n");
+    } while (1);
+
+    if (jawab == 'y') {
         printf("\n=== HISTORI GRAFIK DEGRADASI ===\n");
         for (int i = 0; i < MAX_HARI; i++) {
             if (histori_massa[i] == 0.0) break;
